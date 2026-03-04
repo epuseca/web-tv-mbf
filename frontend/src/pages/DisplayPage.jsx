@@ -25,9 +25,29 @@ const DisplayPage = () => {
 
     useEffect(() => {
         fetchImages();
-        // Refresh images every 60 seconds to catch updates
-        const refreshInterval = setInterval(fetchImages, 60000);
-        return () => clearInterval(refreshInterval);
+
+        // Connect to SSE for real-time updates from admin
+        const apiBase = import.meta.env.VITE_API_URL || '/api';
+        const eventSource = new EventSource(`${apiBase}/images/events`);
+
+        eventSource.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (['image_created', 'image_updated', 'image_deleted'].includes(data.type)) {
+                    console.log(`🔄 Real-time update: ${data.type}`);
+                    fetchImages();
+                }
+            } catch (err) {
+                // ignore parse errors
+            }
+        };
+
+        eventSource.onerror = () => {
+            // Auto-reconnect is built into EventSource
+            console.warn('⚠️ SSE connection lost, reconnecting...');
+        };
+
+        return () => eventSource.close();
     }, [fetchImages]);
 
     // Slideshow timer

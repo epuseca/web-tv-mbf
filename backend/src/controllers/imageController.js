@@ -1,4 +1,5 @@
 const imageService = require('../services/imageService');
+const { broadcast } = require('../services/sseService');
 
 /**
  * @desc    Get all images
@@ -43,6 +44,7 @@ const getImageById = async (req, res, next) => {
 const createImage = async (req, res, next) => {
     try {
         const image = await imageService.createImage(req.body);
+        broadcast('image_created');
         res.status(201).json({
             success: true,
             message: 'Image created successfully',
@@ -61,6 +63,7 @@ const createImage = async (req, res, next) => {
 const updateImage = async (req, res, next) => {
     try {
         const image = await imageService.updateImage(req.params.id, req.body);
+        broadcast('image_updated');
         res.status(200).json({
             success: true,
             message: 'Image updated successfully',
@@ -79,6 +82,7 @@ const updateImage = async (req, res, next) => {
 const deleteImage = async (req, res, next) => {
     try {
         await imageService.deleteImage(req.params.id);
+        broadcast('image_deleted');
         res.status(200).json({
             success: true,
             message: 'Image deleted successfully',
