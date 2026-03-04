@@ -15,13 +15,20 @@ const DisplayPage = () => {
     const fetchImages = useCallback(async () => {
         try {
             const res = await imageApi.getAll();
-            setImages(res.data.data || []);
+            const newImages = res.data.data || [];
+            setImages((prevImages) => {
+                // If images were removed, adjust currentIndex
+                if (newImages.length > 0 && newImages.length <= currentIndex) {
+                    setCurrentIndex(0);
+                }
+                return newImages;
+            });
         } catch (error) {
             console.error('Failed to fetch images:', error);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [currentIndex]);
 
     useEffect(() => {
         fetchImages();
