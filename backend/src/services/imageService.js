@@ -4,9 +4,10 @@ class ImageService {
     /**
      * Get all images sorted by creation date (newest first)
      */
-    async getAllImages() {
+    async getAllImages(options = {}) {
         try {
-            const images = await Image.find().sort({ createdAt: -1 });
+            const query = options.activeOnly ? { isActive: true } : {};
+            const images = await Image.find(query).sort({ createdAt: -1 });
             return images;
         } catch (error) {
             throw new Error(`Failed to fetch images: ${error.message}`);
@@ -55,8 +56,12 @@ class ImageService {
      */
     async updateImage(id, data) {
         try {
-            const { title, description, imageBase64 } = data;
+            const { title, description, imageBase64, isActive } = data;
             const updateData = { title, description };
+
+            if (isActive !== undefined) {
+                updateData.isActive = isActive;
+            }
 
             // Only update image if a new one is provided
             if (imageBase64) {

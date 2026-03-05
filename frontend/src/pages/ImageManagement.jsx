@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Table, Button, Space, Popconfirm, Tag, message, Tooltip } from 'antd';
+import { Table, Button, Space, Popconfirm, Tag, message, Tooltip, Switch } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import imageApi from '../api/imageApi';
 import ImageFormModal from '../components/ImageFormModal';
@@ -44,6 +44,16 @@ const ImageManagement = () => {
             fetchImages();
         } catch (error) {
             message.error('Xóa hình ảnh thất bại!');
+        }
+    };
+
+    const handleToggleStatus = async (id, checked) => {
+        try {
+            await imageApi.update(id, { isActive: checked });
+            message.success(`Đã ${checked ? 'hiển thị' : 'ẩn'} hình ảnh thành công!`);
+            fetchImages();
+        } catch (error) {
+            message.error('Cập nhật trạng thái thất bại!');
         }
     };
 
@@ -109,6 +119,20 @@ const ImageManagement = () => {
                         minute: '2-digit',
                     })}
                 </Tag>
+            ),
+        },
+        {
+            title: 'Hiển thị',
+            dataIndex: 'isActive',
+            key: 'isActive',
+            width: 100,
+            render: (isActive, record) => (
+                <Switch
+                    checked={isActive ?? true}
+                    onChange={(checked) => handleToggleStatus(record._id, checked)}
+                    checkedChildren="Hiện"
+                    unCheckedChildren="Ẩn"
+                />
             ),
         },
         {

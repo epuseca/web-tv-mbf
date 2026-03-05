@@ -14,7 +14,7 @@ const DisplayPage = () => {
     // Fetch images
     const fetchImages = useCallback(async () => {
         try {
-            const res = await imageApi.getAll();
+            const res = await imageApi.getAll({ active: true });
             const newImages = res.data.data || [];
             setImages((prevImages) => {
                 // If images were removed, adjust currentIndex

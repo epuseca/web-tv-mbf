@@ -1,7 +1,7 @@
 import axiosInstance from './axiosInstance';
 
 export const imageApi = {
-    getAll: () => axiosInstance.get('/images'),
+    getAll: (params = {}) => axiosInstance.get('/images', { params }),
     getById: (id) => axiosInstance.get(`/images/${id}`),
     create: (data) => axiosInstance.post('/images', data),
     update: (id, data) => axiosInstance.put(`/images/${id}`, data),

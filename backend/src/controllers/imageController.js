@@ -8,7 +8,8 @@ const { broadcast } = require('../services/sseService');
  */
 const getAllImages = async (req, res, next) => {
     try {
-        const images = await imageService.getAllImages();
+        const activeOnly = req.query.active === 'true';
+        const images = await imageService.getAllImages({ activeOnly });
         res.status(200).json({
             success: true,
             count: images.length,
