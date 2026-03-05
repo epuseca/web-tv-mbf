@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { Button, Tooltip } from 'antd';
+import { FullscreenOutlined, FullscreenExitOutlined } from '@ant-design/icons';
 import imageApi from '../api/imageApi';
 
 const SLIDE_INTERVAL = 10000; // 10 seconds
@@ -8,8 +10,27 @@ const DisplayPage = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [progress, setProgress] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [isFullscreen, setIsFullscreen] = useState(false);
     const progressRef = useRef(null);
     const slideRef = useRef(null);
+
+    // Track fullscreen state changes (e.g. user presses Esc)
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    }, []);
+
+    // Toggle fullscreen
+    const toggleFullscreen = () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen?.();
+        } else {
+            document.exitFullscreen?.();
+        }
+    };
 
     // Fetch images
     const fetchImages = useCallback(async () => {
@@ -17,7 +38,6 @@ const DisplayPage = () => {
             const res = await imageApi.getAll({ active: true });
             const newImages = res.data.data || [];
             setImages((prevImages) => {
-                // If images were removed, adjust currentIndex
                 if (newImages.length > 0 && newImages.length <= currentIndex) {
                     setCurrentIndex(0);
                 }
@@ -33,7 +53,6 @@ const DisplayPage = () => {
     useEffect(() => {
         fetchImages();
 
-        // Connect to SSE for real-time updates from admin
         const apiBase = import.meta.env.VITE_API_URL || '/api';
         const eventSource = new EventSource(`${apiBase}/images/events`);
 
@@ -50,7 +69,6 @@ const DisplayPage = () => {
         };
 
         eventSource.onerror = () => {
-            // Auto-reconnect is built into EventSource
             console.warn('⚠️ SSE connection lost, reconnecting...');
         };
 
@@ -61,7 +79,6 @@ const DisplayPage = () => {
     useEffect(() => {
         if (images.length <= 1) return;
 
-        // Progress bar animation
         setProgress(0);
         const progressInterval = setInterval(() => {
             setProgress((prev) => {
@@ -70,7 +87,6 @@ const DisplayPage = () => {
             });
         }, 100);
 
-        // Slide change
         slideRef.current = setTimeout(() => {
             setCurrentIndex((prev) => (prev + 1) % images.length);
         }, SLIDE_INTERVAL);
@@ -81,17 +97,12 @@ const DisplayPage = () => {
         };
     }, [currentIndex, images.length]);
 
-    // Enter fullscreen on load
+    // Keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === 'f' || e.key === 'F') {
-                if (!document.fullscreenElement) {
-                    document.documentElement.requestFullscreen?.();
-                } else {
-                    document.exitFullscreen?.();
-                }
+                toggleFullscreen();
             }
-            // Arrow keys to manual navigate
             if (e.key === 'ArrowRight') {
                 setCurrentIndex((prev) => (prev + 1) % images.length);
             }
@@ -143,6 +154,32 @@ const DisplayPage = () => {
                     </div>
                 </div>
             ))}
+
+            {/* Fullscreen Button */}
+            <Tooltip title={isFullscreen ? 'Thoát toàn màn hình (F)' : 'Toàn màn hình (F)'} placement="bottomLeft">
+                <Button
+                    type="text"
+                    icon={isFullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
+                    onClick={toggleFullscreen}
+                    style={{
+                        position: 'fixed',
+                        top: 16,
+                        right: 16,
+                        zIndex: 1000,
+                        color: '#fff',
+                        background: 'rgba(0, 0, 0, 0.45)',
+                        border: 'none',
+                        borderRadius: 8,
+                        width: 40,
+                        height: 40,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 18,
+                        backdropFilter: 'blur(4px)',
+                    }}
+                />
+            </Tooltip>
 
             {/* Slide counter */}
             {/* <div className="display-counter">
